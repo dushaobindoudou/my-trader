@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 信息条目表
+model KnowledgeEntry {
+  id        String   @id @default(uuid())
+  content   String
+  category  String   @db.VarChar(50)
+  tags      String[]
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("knowledge_entries")
+  @@index([category])
+  @@index([tags], type: Gin)
+  @@index([createdAt])
+}
+
+// LLM配置表
+model LlmConfig {
+  id      String  @id @default(uuid())
+  name    String  @db.VarChar(100)
+  apiKey  String  @db.VarChar(255) @map("api_key")
+  apiUrl  String  @db.VarChar(255) @map("api_url")
+  isActive Boolean @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("llm_configs")
+}
+
+// Agent配置表
+model AgentConfig {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(100)
+  description  String?
+  systemPrompt String   @map("system_prompt")
+  isDefault    Boolean  @default(false) @map("is_default")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("agent_configs")
+  @@index([isDefault])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+// 分析历史表
+model AnalysisHistory {
+  id            String   @id @default(uuid())
+  question      String
+  contextIds    String[] @map("context_ids")
+  agentConfigId String   @map("agent_config_id")
+  responses     Json
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("analysis_history")
+  @@index([createdAt])
+  @@index([contextIds], type: Gin)
+  @@index([agentConfigId])
+}
+
+// 投资决策表
+model TradeRecord {
+  id        String    @id @default(uuid())
+  asset     String    @db.VarChar(50)
+  action    String    @db.VarChar(20)
+  amount    Decimal   @db.Decimal(15, 2)
+  price     Decimal?  @db.Decimal(15, 4)
+  quantity  Decimal?  @db.Decimal(15, 6)
+  reason    String
+  tags      String[]
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  note      String?
+
+  @@map("trade_records")
+  @@index([asset])
+  @@index([createdAt])
+}
+
+// 观察标的表
+model Watchlist {
+  id           String    @id @default(uuid())
+  asset        String    @db.VarChar(50)
+  reason       String
+  targetPrice  Decimal?  @map("target_price") @db.Decimal(15, 4)
+  currentPrice Decimal?  @map("current_price") @db.Decimal(15, 4)
+  status       String    @default("观察中") @db.VarChar(20)
+  tags         String[]
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  note         String?
+
+  @@map("watchlist")
+  @@index([asset])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// 资产组合表
+model AssetPortfolio {
+  id              String    @id @default(uuid())
+  asset           String    @db.VarChar(50)
+  assetType       String    @map("asset_type") @db.VarChar(20)
+  quantity        Decimal   @db.Decimal(20, 8)
+  avgCostPrice    Decimal   @map("avg_cost_price") @db.Decimal(15, 4)
+  currentPrice    Decimal?  @map("current_price") @db.Decimal(15, 4)
+  totalCost       Decimal   @map("total_cost") @db.Decimal(15, 2)
+  currentValue    Decimal?  @map("current_value") @db.Decimal(15, 2)
+  unrealizedPnl   Decimal?  @map("unrealized_pnl") @db.Decimal(15, 2)
+  realizedPnl     Decimal?  @map("realized_pnl") @db.Decimal(15, 2)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("asset_portfolio")
+  @@index([asset])
+  @@index([assetType])
+  @@index([updatedAt])
+}
+
+// 现金记录表
+model CashTransaction {
+  id            String    @id @default(uuid())
+  currency      String    @db.VarChar(10)
+  transactionType String  @map("transaction_type") @db.VarChar(20)
+  amount        Decimal   @db.Decimal(15, 2)
+  balanceAfter  Decimal   @map("balance_after") @db.Decimal(15, 2)
+  description   String?
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("cash_transactions")
+  @@index([currency])
+  @@index([transactionType])
+  @@index([createdAt])
+}
