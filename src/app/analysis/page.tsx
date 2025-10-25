@@ -1,18 +1,17 @@
-import { Header } from "@/components/header"
+import { AuthenticatedLayout } from "@/components/layout/authenticated-layout"
+import { Main } from "@/components/layout/main"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 
 export default function AnalysisPage() {
   return (
-    <div className="min-h-screen">
-      <Header />
-      <main className="container mx-auto py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">AI分析</h1>
+    <AuthenticatedLayout>
+      <Main>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">AI分析</h1>
           <p className="text-muted-foreground">基于AI的投资决策辅助</p>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 左侧：信息筛选 */}
           <Card>
@@ -88,7 +87,7 @@ export default function AnalysisPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
-    </div>
+      </Main>
+    </AuthenticatedLayout>
   )
 }

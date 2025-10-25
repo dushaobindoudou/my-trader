@@ -1,4 +1,5 @@
-import { Header } from "@/components/header"
+import { AuthenticatedLayout } from "@/components/layout/authenticated-layout"
+import { Main } from "@/components/layout/main"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -6,14 +7,12 @@ import { Label } from "@/components/ui/label"
 
 export default function SettingsPage() {
   return (
-    <div className="min-h-screen">
-      <Header />
-      <main className="container mx-auto py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">设置</h1>
+    <AuthenticatedLayout>
+      <Main>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">设置</h1>
           <p className="text-muted-foreground">配置LLM模型和Agent</p>
         </div>
-
         <div className="grid gap-6">
           <Card>
             <CardHeader>
@@ -61,7 +60,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </div>
-      </main>
-    </div>
+      </Main>
+    </AuthenticatedLayout>
   )
 }

@@ -1,67 +1,179 @@
-import { Header } from "@/components/header"
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Main } from '@/components/layout/main'
+import { AuthenticatedLayout } from '@/components/layout/authenticated-layout'
+import { ArrowUpIcon, ArrowDownIcon, TrendingUp, DollarSign, Target, Activity } from "lucide-react"
 
 export default function Home() {
   return (
-    <div className="min-h-screen">
-      <Header />
-      <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <AuthenticatedLayout>
+      <Main>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">总资产</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">¥125,000</div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <ArrowUpIcon className="h-3 w-3 text-green-600" />
+              <span className="text-green-600">+20.1%</span>
+              <span>较上月</span>
+            </p>
+          </CardContent>
+        </Card>
 
-      <div className="relative flex place-items-center">
-        <h1 className="text-4xl font-bold text-center">
-          欢迎使用 AI交易员
-        </h1>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">总收益</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">+¥25,000</div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <ArrowUpIcon className="h-3 w-3 text-green-600" />
+              <span className="text-green-600">+25%</span>
+              <span>收益率</span>
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">持仓数量</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">8</div>
+            <p className="text-xs text-muted-foreground">
+              3个标的在观察列表
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">今日变化</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">-¥1,200</div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <ArrowDownIcon className="h-3 w-3 text-red-600" />
+              <span className="text-red-600">-0.96%</span>
+              <span>今日涨跌</span>
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-          <h2 className="mb-3 text-2xl font-semibold">
-            知识库{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            管理投资信息和市场数据
-          </p>
-        </div>
+      {/* Charts and Recent Activity */}
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>资产趋势</CardTitle>
+            <CardDescription>最近30天的资产变化情况</CardDescription>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              图表区域（可接入 recharts 或其他图表库）
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-          <h2 className="mb-3 text-2xl font-semibold">
-            投资记录{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            记录交易决策和投资历史
-          </p>
-        </div>
-
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-          <h2 className="mb-3 text-2xl font-semibold">
-            资产管理{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            跟踪资产组合和盈亏情况
-          </p>
-        </div>
-
-        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30">
-          <h2 className="mb-3 text-2xl font-semibold">
-            AI分析{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            基于AI的投资决策辅助
-          </p>
-        </div>
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>最近交易</CardTitle>
+            <CardDescription>最新的投资记录</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">买入 BTC</p>
+                  <p className="text-xs text-muted-foreground">2小时前</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium">¥10,000</p>
+                  <p className="text-xs text-green-600">+5.2%</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">卖出 ETH</p>
+                  <p className="text-xs text-muted-foreground">昨天</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium">¥5,000</p>
+                  <p className="text-xs text-green-600">+12.5%</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">买入 SOL</p>
+                  <p className="text-xs text-muted-foreground">3天前</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium">¥3,000</p>
+                  <p className="text-xs text-red-600">-2.1%</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      </main>
-    </div>
+
+      {/* Top Holdings */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>持仓概览</CardTitle>
+          <CardDescription>当前主要持仓资产</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+                  <span className="font-bold text-orange-600">₿</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Bitcoin (BTC)</p>
+                  <p className="text-xs text-muted-foreground">0.5 BTC</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium">¥75,000</p>
+                <p className="text-xs text-green-600">+15.2%</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <span className="font-bold text-blue-600">Ξ</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Ethereum (ETH)</p>
+                  <p className="text-xs text-muted-foreground">2.0 ETH</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium">¥50,000</p>
+                <p className="text-xs text-green-600">+8.5%</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      </Main>
+    </AuthenticatedLayout>
   )
 }

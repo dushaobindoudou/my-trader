@@ -1,8 +1,20 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Manrope } from "next/font/google"
 import "./globals.css"
+import { ThemeProvider } from "@/contexts/theme-provider"
+import { FontProvider } from "@/contexts/font-provider"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const manrope = Manrope({ 
+  subsets: ["latin"],
+  variable: '--font-manrope',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: "AI交易员",
@@ -15,9 +27,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN">
-      <body className={inter.className}>
-        {children}
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body className={`${inter.variable} ${manrope.variable} font-inter antialiased`}>
+        <ThemeProvider>
+          <FontProvider>
+            {children}
+          </FontProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
