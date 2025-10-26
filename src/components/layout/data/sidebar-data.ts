@@ -7,6 +7,7 @@ import {
   Settings,
   BarChart3,
   Search,
+  TestTube,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -18,7 +19,7 @@ export const sidebarData: SidebarData = {
   },
   navGroups: [
     {
-      title: '主要功能',
+      title: '核心',
       items: [
         {
           title: '首页',
@@ -69,6 +70,11 @@ export const sidebarData: SidebarData = {
           title: '设置',
           url: '/settings',
           icon: Settings,
+        },
+        {
+          title: '认证测试',
+          url: '/test-auth',
+          icon: TestTube,
         },
       ],
     },

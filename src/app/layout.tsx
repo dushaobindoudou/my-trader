@@ -3,6 +3,9 @@ import { Inter, Manrope } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/contexts/theme-provider"
 import { FontProvider } from "@/contexts/font-provider"
+import { Providers } from "@/contexts/providers"
+import { AuthGuard } from "@/components/auth/auth-guard"
+import { Toaster } from "sonner"
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -17,8 +20,8 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: "AI交易员",
-  description: "基于AI的投资决策辅助系统",
+  title: "My Trader - Web3金融交易平台",
+  description: "专业的Web3金融交易平台，安全、快速、专业的交易体验",
 }
 
 export default function RootLayout({
@@ -31,7 +34,12 @@ export default function RootLayout({
       <body className={`${inter.variable} ${manrope.variable} font-inter antialiased`}>
         <ThemeProvider>
           <FontProvider>
-            {children}
+            <Providers>
+              <AuthGuard>
+                {children}
+              </AuthGuard>
+              <Toaster position="top-right" richColors />
+            </Providers>
           </FontProvider>
         </ThemeProvider>
       </body>

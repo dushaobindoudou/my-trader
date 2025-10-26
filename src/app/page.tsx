@@ -1,3 +1,5 @@
+'use client';
+
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -9,12 +11,33 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Main } from '@/components/layout/main'
 import { AuthenticatedLayout } from '@/components/layout/authenticated-layout'
-import { ArrowUpIcon, ArrowDownIcon, TrendingUp, DollarSign, Target, Activity } from "lucide-react"
+import { ArrowUpIcon, ArrowDownIcon, TrendingUp, DollarSign, Target, Activity, Wallet, Shield } from "lucide-react"
+import { useWeb3Auth } from '@/contexts/web3auth-context'
+import { Badge } from '@/components/ui/badge'
 
 export default function Home() {
+  const { user, isLoggedIn } = useWeb3Auth();
+
   return (
     <AuthenticatedLayout>
       <Main>
+        {/* Web3认证状态卡片 */}
+        {isLoggedIn && user && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-primary" />
+                <span>Web3认证成功</span>
+                <Badge variant="secondary" className="ml-auto">
+                  {user.typeOfLogin || user.verifier || 'Web3'}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                欢迎回来，{user.name || user.email || 'Web3用户'}！您的钱包已安全连接。
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
