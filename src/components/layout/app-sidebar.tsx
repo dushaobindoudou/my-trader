@@ -22,7 +22,7 @@ export function AppSidebar() {
             <span className='text-lg font-bold'>AI</span>
           </div>
           <div className='grid flex-1 text-start text-sm leading-tight group-data-[collapsible=icon]:hidden'>
-            <span className='truncate font-semibold'>AI交易员</span>
+            <span className='truncate font-semibold'>AIpha Trader</span>
             <span className='truncate text-xs'>投资决策辅助</span>
           </div>
         </div>

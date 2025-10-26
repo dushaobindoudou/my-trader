@@ -19,16 +19,14 @@ import {
   LogOut, 
   Settings, 
   Wallet,
-  Shield,
-  Globe,
-  Repeat,
   Copy,
+  ExternalLink,
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { authConfig } from '@/config/auth';
 
-export function ProfileDropdown() {
-  const { user, logout, address, getBalance, connectorName, networkName, networkChainId, switchChainTo } = useWeb3Auth();
+export const UserProfile: React.FC = () => {
+  const { user, logout, address, getBalance } = useWeb3Auth();
   const [balance, setBalance] = useState<string>('0');
 
   const handleLogout = async () => {
@@ -48,12 +46,12 @@ export function ProfileDropdown() {
 
   const formatAddress = (address: string) => {
     if (!address) return '';
-    return `${address.slice(0, 21)}...${address.slice(-4)}`;
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   const getUserDisplayName = () => {
     if (!user) return '未知用户';
-    return user.name || user.email || address || 'unknown user';
+    return user.name || user.email || user.verifierId || 'Web3用户';
   };
 
   const getUserAvatar = () => {
@@ -66,28 +64,14 @@ export function ProfileDropdown() {
     return user.typeOfLogin || user.verifier || 'Web3';
   };
 
-  // 检查是否为ETH主网
-  const isMainnet = networkChainId === 1;
-
-  // 切换到ETH主网
-  const handleSwitchToMainnet = async () => {
-    try {
-      await switchChainTo(authConfig.web3Auth.chainConfig.chainId as string);
-      toast.success('正在切换到ETH主网...');
-    } catch (error) {
-      console.error('Switch to mainnet error:', error);
-      toast.error('切换网络失败');
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
             <AvatarImage src={getUserAvatar()} alt={getUserDisplayName()} />
-            <AvatarFallback>
-              {getUserDisplayName().charAt(2).toUpperCase()}
+            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+              {getUserDisplayName().charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -95,31 +79,15 @@ export function ProfileDropdown() {
       <DropdownMenuContent className="w-80" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{getUserDisplayName().substring(0, 8)}</p>
-            {/* <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
+            <p className="text-xs leading-none text-muted-foreground">
               {user?.email || 'Web3用户'}
-            </p> */}
+            </p>
             <div className="flex items-center space-x-2 mt-2">
               <Badge variant="secondary" className="text-xs">
                 <Shield className="w-3 h-3 mr-1" />
                 {getLoginMethod()}
               </Badge>
-              {isMainnet ? (
-                <Badge variant="secondary" className="text-xs">
-                  <Globe className="w-3 h-3 mr-1" />
-                  {networkName || 'ETH Mainnet'}
-                </Badge>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  onClick={handleSwitchToMainnet}
-                >
-                  <Repeat className="w-3 h-3 mr-1" />
-                  切换到主网
-                </Button>
-              )}
             </div>
           </div>
         </DropdownMenuLabel>
@@ -129,16 +97,16 @@ export function ProfileDropdown() {
         {address && (
           <>
             <div className="px-2 py-1.5">
-              <div className="flex items-center">
-                <span className="text-xs text-muted-foreground">钱包地址:</span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">钱包地址</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-6 px-2 text-xs"
                   onClick={() => copyToClipboard(address)}
                 >
-                  {formatAddress(address)}
                   <Copy className="w-3 h-3 mr-1" />
+                  {formatAddress(address)}
                 </Button>
               </div>
               {balance !== '0' && (
@@ -172,10 +140,10 @@ export function ProfileDropdown() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
 
 export const UserProfileCard: React.FC = () => {
-  const { user, address, getBalance, connectorName, networkName, networkChainId, switchChainTo } = useWeb3Auth();
+  const { user, address, getBalance } = useWeb3Auth();
   const [balance, setBalance] = useState<string>('0');
 
   const getUserDisplayName = () => {
@@ -191,20 +159,6 @@ export const UserProfileCard: React.FC = () => {
   const getLoginMethod = () => {
     if (!user) return '未知';
     return user.typeOfLogin || user.verifier || 'Web3';
-  };
-
-  // 检查是否为ETH主网
-  const isMainnet = networkChainId === 1;
-
-  // 切换到ETH主网
-  const handleSwitchToMainnet = async () => {
-    try {
-      await switchChainTo(authConfig.web3Auth.chainConfig.chainId as string);
-      toast.success('正在切换到ETH主网...');
-    } catch (error) {
-      console.error('Switch to mainnet error:', error);
-      toast.error('切换网络失败');
-    }
   };
 
   return (
@@ -228,28 +182,12 @@ export const UserProfileCard: React.FC = () => {
               {getUserDisplayName()}
             </p>
             <p className="text-xs text-slate-400 truncate">
-              {user?.email || <div className="text-xs text-slate-400">{networkName || 'unknown network'}</div>}
+              {user?.email || 'Web3用户'}
             </p>
             <Badge variant="secondary" className="mt-1 text-xs">
               <Shield className="w-3 h-3 mr-1" />
               {getLoginMethod()}
             </Badge>
-            {isMainnet ? (
-              <Badge variant="secondary" className="mt-1 text-xs">
-                <Globe className="w-3 h-3 mr-1" />
-                {networkName || 'ETH Mainnet'}
-              </Badge>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-1 h-6 px-2 text-xs text-slate-300 hover:text-white border-slate-600"
-                onClick={handleSwitchToMainnet}
-              >
-               <Repeat className="w-3 h-3 mr-1" />
-                切换到主网
-              </Button>
-            )}
           </div>
         </div>
 
@@ -266,7 +204,7 @@ export const UserProfileCard: React.FC = () => {
                   toast.success('已复制到剪贴板');
                 }}
               >
-                <span className="w-3 h-3 mr-1">📋</span>
+                <Copy className="w-3 h-3 mr-1" />
                 {`${address?.slice(0, 6)}...${address?.slice(-4)}`}
               </Button>
             </div>

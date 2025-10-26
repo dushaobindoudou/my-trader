@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { UserProfile } from '@/components/auth/user-profile'
+import { ProfileDropdown } from '@/components/profile-dropdown'
 import { ThemeSwitch } from '@/components/theme-switch'
 
 type HeaderProps = React.HTMLAttributes<HTMLElement> & {
@@ -48,10 +48,10 @@ export function Header({ className, fixed, children, ...props }: HeaderProps) {
         <SidebarTrigger className='max-md:scale-125' />
         <Separator orientation='vertical' className='h-6' />
         {children}
-        <div className="ml-auto flex items-center space-x-2">
+        {/* <div className="ml-auto flex items-center space-x-2">
           <ThemeSwitch />
-          <UserProfile />
-        </div>
+          <ProfileDropdown />
+        </div> */}
       </div>
     </header>
   )

@@ -81,7 +81,7 @@ export function Sidebar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="text-lg font-bold">AI交易员</span>
+          <span className="text-lg font-bold">AIpha Trader</span>
         </Link>
       </div>
 
@@ -122,7 +122,7 @@ export function Sidebar() {
                 <AvatarFallback>AI</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start text-sm">
-                <span className="font-medium">AI交易员</span>
+                <span className="font-medium">AIpha Trader</span>
                 <span className="text-xs text-muted-foreground">
                   user@example.com
                 </span>
