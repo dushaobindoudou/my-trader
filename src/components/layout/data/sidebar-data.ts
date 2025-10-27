@@ -10,12 +10,14 @@ import {
   TestTube,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
+import { useWeb3Auth } from '@/contexts/web3auth-context';
+
 
 export const sidebarData: SidebarData = {
   user: {
-    name: '交易员',
-    email: 'trader@example.com',
-    avatar: '/avatars/user.jpg',
+    name: '',
+    email: '',
+    avatar: '',
   },
   navGroups: [
     {

@@ -31,8 +31,7 @@ export function Header({ className, fixed, children, ...props }: HeaderProps) {
     <header
       className={cn(
         'z-50 h-16',
-        fixed && 'header-fixed peer/header sticky top-0 w-[inherit]',
-        offset > 10 && fixed ? 'shadow' : 'shadow-none',
+        fixed && 'header-fixed peer/header fixed top-0 w-[calc(100%-var(--sidebar-width))] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
         className
       )}
       {...props}
@@ -48,10 +47,6 @@ export function Header({ className, fixed, children, ...props }: HeaderProps) {
         <SidebarTrigger className='max-md:scale-125' />
         <Separator orientation='vertical' className='h-6' />
         {children}
-        {/* <div className="ml-auto flex items-center space-x-2">
-          <ThemeSwitch />
-          <ProfileDropdown />
-        </div> */}
       </div>
     </header>
   )

@@ -5,7 +5,7 @@ type MainProps = React.HTMLAttributes<HTMLElement> & {
   fluid?: boolean
 }
 
-export function Main({ fixed, className, fluid, ...props }: MainProps) {
+export function Main({ fixed = true, className, fluid, ...props }: MainProps) {
   return (
     <main
       data-layout={fixed ? 'fixed' : 'auto'}

@@ -25,6 +25,9 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
             // Set content container, so we can use container queries
             '@container/content',
 
+            // Ensure proper scrolling behavior for sticky header
+            'overflow-y-auto',
+
             // If layout is fixed, set the height
             // to 100svh to prevent overflow
             'has-[[data-layout=fixed]]:h-svh',
@@ -35,15 +38,16 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
           )}
         >
           {/* Global Header */}
-          <Header>
+          <Header fixed={true}>
             <Search />
             <div className='ml-auto flex items-center space-x-4'>
               <ThemeSwitch />
               <ProfileDropdown />
             </div>
           </Header>
-          
-          {children}
+          <div className='mt-16'>
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </LayoutProvider>
