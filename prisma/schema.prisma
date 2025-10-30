@@ -142,3 +142,58 @@ model CashTransaction {
   @@index([transactionType])
   @@index([createdAt])
 }
+
+// 链上资产定义表（支持原生与 ERC20）
+model Asset {
+  id              String   @id @default(uuid())
+  chainId         Int
+  symbol          String   @db.VarChar(30)
+  name            String   @db.VarChar(100)
+  assetType       String   @map("asset_type") @db.VarChar(20) // NATIVE | ERC20
+  contractAddress String?  @map("contract_address") @db.VarChar(100)
+  decimals        Int
+  isDefault       Boolean  @default(false) @map("is_default")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  importedAssets  ImportedAsset[]
+  snapshots       AssetSnapshot[]
+
+  @@map("assets")
+  @@index([chainId])
+  @@index([symbol])
+  @@unique([chainId, contractAddress])
+}
+
+// 用户导入资产表（按钱包地址归属）
+model ImportedAsset {
+  id            String   @id @default(uuid())
+  walletAddress String   @map("wallet_address") @db.VarChar(100)
+  assetId       String   @map("asset_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  asset         Asset    @relation(fields: [assetId], references: [id])
+
+  @@map("imported_assets")
+  @@unique([walletAddress, assetId])
+  @@index([walletAddress])
+}
+
+// 资产余额快照表（每次导入或手动触发快照都会记录）
+model AssetSnapshot {
+  id            String   @id @default(uuid())
+  walletAddress String   @map("wallet_address") @db.VarChar(100)
+  assetId       String   @map("asset_id")
+  blockNumber   BigInt   @map("block_number")
+  // 使用人类可读的小数化数量，避免前端频繁换算
+  balance       Decimal  @db.Decimal(40, 18)
+  // 同时存储原始最小单位字符串，防止精度丢失（如 wei）
+  balanceRaw    String   @map("balance_raw") @db.VarChar(100)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  asset         Asset    @relation(fields: [assetId], references: [id])
+
+  @@map("asset_snapshots")
+  @@index([walletAddress])
+  @@index([assetId])
+  @@index([createdAt])
+}
