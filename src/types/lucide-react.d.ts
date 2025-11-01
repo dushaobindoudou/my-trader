@@ -7,7 +7,7 @@ declare module 'lucide-react' {
     strokeWidth?: string | number;
   }
   
-  export type LucideIcon = ComponentType<LucideProps | any>;
+  export type LucideIcon = ComponentType<any>;
   
   export const Wallet: LucideIcon;
   export const Loader2: LucideIcon;
