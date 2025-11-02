@@ -8,6 +8,7 @@ import {
   BarChart3,
   Search,
   TestTube,
+  FolderKanban,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 import { useWeb3Auth } from '@/contexts/web3auth-context';
@@ -62,6 +63,11 @@ export const sidebarData: SidebarData = {
           title: '知识库',
           url: '/knowledge',
           icon: BookOpen,
+        },
+        {
+          title: '主题管理',
+          url: '/knowledge/topics',
+          icon: FolderKanban,
         },
       ],
     },

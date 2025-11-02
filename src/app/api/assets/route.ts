@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { DEFAULT_ASSETS } from '@/config/assets';
 import alchemy, { getEthBalance, erc20BalanceOf, erc20Decimals } from '@/services/alchemy';
 
@@ -16,59 +16,54 @@ type ImportBody = {
 };
 
 async function seedDefaults() {
+  const supabase = createAdminClient();
+  
   for (const a of DEFAULT_ASSETS) {
-    await prisma.asset.upsert({
-      where: {
-        // 唯一键由 [chainId, contractAddress] 组成；原生币使用 null
-        // Prisma 不支持复合 where 用 null，使用自定义查询实现
-        id: (
-          await prisma.asset.findFirst({
-            where: {
-              chainId: a.chainId,
-              contractAddress: a.assetType === 'NATIVE' ? null : a.contractAddress,
-            },
-            select: { id: true },
-          })
-        )?.id || '___temp___',
-      },
-      update: {},
-      create: {
-        chainId: a.chainId,
+    // 检查资产是否已存在
+    let query = supabase
+      .from('assets')
+      .select('id')
+      .eq('chain_id', a.chainId);
+    
+    if (a.assetType === 'NATIVE') {
+      query = query.is('contract_address', null);
+    } else {
+      query = query.eq('contract_address', a.contractAddress);
+    }
+    
+    const { data: existing } = await query.maybeSingle();
+    
+    if (!existing) {
+      // 创建新资产
+      await supabase.from('assets').insert({
+        chain_id: a.chainId,
         symbol: a.symbol,
         name: a.name,
-        assetType: a.assetType,
-        contractAddress: a.assetType === 'NATIVE' ? null : a.contractAddress,
+        asset_type: a.assetType,
+        contract_address: a.assetType === 'NATIVE' ? null : a.contractAddress,
         decimals: a.decimals,
-        isDefault: true,
-      },
-    }).catch(async () => {
-      // 如果 upsert 因 where 不命中而失败，执行 create-if-not-exists 流程
-      const exist = await prisma.asset.findFirst({
-        where: {
-          chainId: a.chainId,
-          contractAddress: a.assetType === 'NATIVE' ? null : a.contractAddress,
-        },
+        is_default: true,
       });
-      if (!exist) {
-        await prisma.asset.create({
-          data: {
-            chainId: a.chainId,
-            symbol: a.symbol,
-            name: a.name,
-            assetType: a.assetType,
-            contractAddress: a.assetType === 'NATIVE' ? null : a.contractAddress,
-            decimals: a.decimals,
-            isDefault: true,
-          },
-        });
-      }
-    });
+    }
   }
 }
 
 export async function GET() {
+  const supabase = createAdminClient();
   await seedDefaults();
-  const assets = await prisma.asset.findMany({ orderBy: { symbol: 'asc' } });
+  
+  const { data: assets, error } = await supabase
+    .from('assets')
+    .select('*')
+    .order('symbol', { ascending: true });
+  
+  if (error) {
+    return NextResponse.json(
+      { error: '获取资产列表失败', detail: error.message },
+      { status: 500 }
+    );
+  }
+  
   return NextResponse.json({ assets });
 }
 
@@ -101,6 +96,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'assets required' }, { status: 400 });
   }
 
+  const supabase = createAdminClient();
   await seedDefaults();
 
   const results: any[] = [];
@@ -109,16 +105,19 @@ export async function POST(req: NextRequest) {
     if (!chainId) continue;
 
     // 1) 解析/准备 Asset 记录
-    let asset = await prisma.asset.findFirst({
-      where: {
-        chainId,
-        ...(contractAddress
-          ? { contractAddress: contractAddress }
-          : symbol
-          ? { symbol }
-          : {}),
-      },
-    });
+    let query = supabase
+      .from('assets')
+      .select('*')
+      .eq('chain_id', chainId);
+    
+    if (contractAddress) {
+      query = query.eq('contract_address', contractAddress);
+    } else if (symbol) {
+      query = query.eq('symbol', symbol);
+    }
+    
+    const { data: assets } = await query;
+    let asset = assets?.[0];
 
     // 如果是自定义 ERC20，但尚未存在，查询 decimals 并创建
     if (!asset && contractAddress) {
@@ -126,46 +125,54 @@ export async function POST(req: NextRequest) {
       try {
         decimals = await erc20Decimals(contractAddress);
       } catch {}
-      asset = await prisma.asset.create({
-        data: {
-          chainId,
+      
+      const { data: newAsset, error } = await supabase
+        .from('assets')
+        .insert({
+          chain_id: chainId,
           symbol: symbol || 'TOKEN',
           name: symbol || 'Token',
-          assetType: 'ERC20',
-          contractAddress,
+          asset_type: 'ERC20',
+          contract_address: contractAddress,
           decimals,
-          isDefault: false,
-        },
-      });
+          is_default: false,
+        })
+        .select()
+        .single();
+      
+      if (!error && newAsset) {
+        asset = newAsset;
+      }
     }
 
     if (!asset) continue;
 
-    // 2) 记录 ImportedAsset（忽略唯一冲突）
-    await prisma.importedAsset.upsert({
-      where: {
-        walletAddress_assetId: {
-          walletAddress: wallet,
-          assetId: asset.id,
-        },
-      },
-      update: {},
-      create: { walletAddress: wallet, assetId: asset.id },
-    }).catch(async () => {
-      const existed = await prisma.importedAsset.findFirst({
-        where: { walletAddress: wallet, assetId: asset!.id },
+    // 2) 记录 ImportedAsset（使用 upsert 或者先检查后插入）
+    const { data: existingImported } = await supabase
+      .from('imported_assets')
+      .select('id')
+      .eq('wallet_address', wallet)
+      .eq('asset_id', asset.id)
+      .maybeSingle();
+    
+    if (!existingImported) {
+      await supabase.from('imported_assets').insert({
+        wallet_address: wallet,
+        asset_id: asset.id,
       });
-      if (!existed) await prisma.importedAsset.create({ data: { walletAddress: wallet, assetId: asset!.id } });
-    });
+    }
 
     // 3) 读取余额并做快照
     let raw: bigint = 0n;
     let blockNumber: bigint = 0n;
     try {
-      if (asset.assetType === 'NATIVE') {
+      const assetType = asset.asset_type;
+      const contractAddr = asset.contract_address;
+      
+      if (assetType === 'NATIVE') {
         raw = await getEthBalance(wallet);
-      } else if (asset.contractAddress) {
-        raw = await erc20BalanceOf(asset.contractAddress, wallet);
+      } else if (contractAddr) {
+        raw = await erc20BalanceOf(contractAddr, wallet);
       }
       const bnHex = await alchemy.rpcCall<string>('eth_blockNumber', []);
       blockNumber = BigInt(bnHex);
@@ -175,17 +182,21 @@ export async function POST(req: NextRequest) {
 
     const balanceStr = toDecimalString(raw, asset.decimals);
 
-    const snapshot = await prisma.assetSnapshot.create({
-      data: {
-        walletAddress: wallet,
-        assetId: asset.id,
-        blockNumber,
+    const { data: snapshot, error: snapshotError } = await supabase
+      .from('asset_snapshots')
+      .insert({
+        wallet_address: wallet,
+        asset_id: asset.id,
+        block_number: blockNumber.toString(),
         balance: balanceStr,
-        balanceRaw: raw.toString(),
-      },
-    });
+        balance_raw: raw.toString(),
+      })
+      .select()
+      .single();
 
-    results.push({ asset, snapshot });
+    if (!snapshotError && snapshot) {
+      results.push({ asset, snapshot });
+    }
   }
 
   return NextResponse.json({ ok: true, results });

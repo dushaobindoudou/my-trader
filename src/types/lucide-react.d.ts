@@ -30,6 +30,7 @@ declare module 'lucide-react' {
   export const Moon: LucideIcon;
   export const Sun: LucideIcon;
   export const ChevronRight: LucideIcon;
+  export const ChevronLeft: LucideIcon;
   export const ChevronDown: LucideIcon;
   export const ChevronUp: LucideIcon;
   export const X: LucideIcon;
@@ -42,4 +43,15 @@ declare module 'lucide-react' {
   export const XIcon: LucideIcon;
   export const CheckIcon: LucideIcon;
   export const CircleIcon: LucideIcon;
+  export const Plus: LucideIcon;
+  export const Edit: LucideIcon;
+  export const Edit2: LucideIcon;
+  export const Trash2: LucideIcon;
+  export const Eye: LucideIcon;
+  export const EyeOff: LucideIcon;
+  export const Tag: LucideIcon;
+  export const Hash: LucideIcon;
+  export const FileText: LucideIcon;
+  export const MoreHorizontal: LucideIcon;
+  export const Filter: LucideIcon;
 }
