@@ -54,6 +54,11 @@ export default function TopicsPage() {
     setIsFormOpen(true)
   }
 
+  const handleDelete = async (id: string) => {
+    // 删除功能已由 TopicCard 组件内部处理，这里可以添加额外的逻辑
+    setRefreshKey(prev => prev + 1)
+  }
+
   return (
     <AuthenticatedLayout>
       <Main>
@@ -75,6 +80,7 @@ export default function TopicsPage() {
         <div key={refreshKey}>
           <TopicList
             onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         </div>
 

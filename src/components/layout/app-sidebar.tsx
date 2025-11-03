@@ -25,11 +25,11 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className='flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:justify-center'>
           <div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground'>
-            <Image src={resolvedTheme !== 'dark' ? logoDark : logo} alt="AIpha Trader" width={32} height={32} />
+            <Image src={resolvedTheme !== 'dark' ? logoDark : logo} alt="AIphaTrader" width={32} height={32} />
           </div>
           <div className='grid flex-1 text-start text-sm leading-tight group-data-[collapsible=icon]:hidden'>
-            <span className='truncate font-semibold'>AIpha Trader</span>
-            <span className='truncate text-xs'>投资决策辅助</span>
+            <span className='truncate font-semibold'>AIphaTrader</span>
+            <span className='truncate text-xs'>AI Web3 投资平台</span>
           </div>
         </div>
       </SidebarHeader>

@@ -14,7 +14,7 @@ export const authConfig = {
       decimals: 18,
     },
     uiConfig: {
-      appName: 'AIpha Trader',
+      appName: 'AIphaTrader',
       theme: 'dark',
       loginMethodsOrder: ['google', 'twitter', 'discord', 'github', 'email_passwordless'],
       defaultLanguage: 'zh',
@@ -46,8 +46,8 @@ export const authConfig = {
   },
   // 应用配置
   app: {
-    name: 'AIpha Trader',
-    description: '专业的Web3金融交易平台',
+    name: 'AIphaTrader',
+    description: 'AI Web3 投资平台',
     logo: '/logo.svg',
     favicon: '/favicon.ico',
   },

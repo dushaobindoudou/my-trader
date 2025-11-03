@@ -10,6 +10,7 @@ import { FileText, Plus } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { TopicForm } from './topic-form'
+import { TopicIcon } from './topic-icon'
 import type { TopicWithEntryCount, TopicCreateInput, TopicUpdateInput } from '@/types/topic'
 
 interface KnowledgeNavProps {
@@ -159,10 +160,16 @@ export function KnowledgeNav({
           ) : (
             topics.map((topic) => (
               <TabsTrigger key={topic.id} value={topic.id}>
-                {topic.icon && <span className="mr-2">{topic.icon}</span>}
-                <span>{topic.name}</span>
-                {topic.entry_count !== undefined && topic.entry_count > 0 && (
-                  <span className="ml-2 text-xs opacity-70">({topic.entry_count})</span>
+                {topic.icon && topic.icon.startsWith('crypto:') ? (
+                  <>
+                    <TopicIcon icon={topic.icon} size={16} className="mr-2" />
+                    <span>{topic.name}</span>
+                  </>
+                ) : (
+                  <>
+                    {topic.icon && <span className="mr-2">{topic.icon}</span>}
+                    <span>{topic.name}</span>
+                  </>
                 )}
               </TabsTrigger>
             ))

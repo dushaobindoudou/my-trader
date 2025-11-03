@@ -17,8 +17,8 @@ NEXT_PUBLIC_WEB3AUTH_NETWORK=testnet
 NEXT_PUBLIC_ETH_RPC_URL=https://eth-mainnet.g.alchemy.com/v2/your_api_key_here
 
 # 应用配置
-NEXT_PUBLIC_APP_NAME=AIpha Trader
-NEXT_PUBLIC_APP_DESCRIPTION=专业的Web3金融交易平台
+NEXT_PUBLIC_APP_NAME=AIphaTrader
+NEXT_PUBLIC_APP_DESCRIPTION=Web3投资系统
 ```
 
 ### 2. Web3Auth 设置

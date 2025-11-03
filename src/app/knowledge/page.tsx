@@ -10,10 +10,12 @@ import { EntryForm } from "@/components/knowledge/entry-form"
 import { EntryDetail } from "@/components/knowledge/entry-detail"
 import { ExportButton } from "@/components/knowledge/export-button"
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { KnowledgeEntryFilter, KnowledgeEntrySort, KnowledgeEntry } from '@/types/knowledge'
 import type { KnowledgeEntryCreateInput, KnowledgeEntryUpdateInput } from '@/types/knowledge'
 
 export default function KnowledgePage() {
+  const searchParams = useSearchParams()
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null) // 当前选中的主题ID
   const [filter, setFilter] = useState<KnowledgeEntryFilter>({})
   const [sort, setSort] = useState<KnowledgeEntrySort>({
@@ -28,6 +30,14 @@ export default function KnowledgePage() {
   const [availableTopics, setAvailableTopics] = useState<Array<{ id: string; name: string }>>([])
   const [detailEntry, setDetailEntry] = useState<KnowledgeEntry | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+
+  // 从 URL 参数中读取 topic ID
+  useEffect(() => {
+    const topicParam = searchParams?.get('topic')
+    if (topicParam) {
+      setSelectedTopicId(topicParam)
+    }
+  }, [searchParams])
 
   // 加载可用标签和主题
   useEffect(() => {

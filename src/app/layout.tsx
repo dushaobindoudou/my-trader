@@ -20,7 +20,7 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: "AIpha Trader - web3辅助投资系统",
+  title: "AIphaTrader - web3辅助投资系统",
   description: "web3辅助投资系统，安全、快速、专业的交易体验",
 }
 

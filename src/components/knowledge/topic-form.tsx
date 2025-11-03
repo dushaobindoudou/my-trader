@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { IconSelector } from './icon-selector'
 import type { Topic, TopicCreateInput, TopicUpdateInput } from '@/types/topic'
 
 interface TopicFormProps {
@@ -121,39 +122,12 @@ export function TopicForm({ open, onOpenChange, topic, onSubmit }: TopicFormProp
               />
             </div>
 
-            {/* 颜色 */}
-            <div className="space-y-2">
-              <Label htmlFor="color">主题颜色</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  id="color"
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-20 h-10"
-                />
-                <Input
-                  type="text"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  placeholder="#3B82F6"
-                  className="flex-1"
-                />
-              </div>
-            </div>
-
             {/* 图标 */}
             <div className="space-y-2">
-              <Label htmlFor="icon">图标 (Emoji)</Label>
-              <Input
-                id="icon"
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                placeholder="例如：📈 📊 💰"
-                maxLength={2}
-              />
+              <Label>图标</Label>
+              <IconSelector value={icon} onChange={setIcon} />
               <p className="text-xs text-muted-foreground">
-                可选，输入一个 emoji 作为主题图标
+                可选，输入加密货币代码（如：btc, eth, sol）
               </p>
             </div>
           </div>

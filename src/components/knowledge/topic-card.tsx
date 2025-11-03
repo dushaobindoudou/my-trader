@@ -14,8 +14,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { TopicIcon } from './topic-icon'
 import type { TopicWithEntryCount } from '@/types/topic'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface TopicCardProps {
   topic: TopicWithEntryCount
@@ -25,6 +26,8 @@ interface TopicCardProps {
 }
 
 export function TopicCard({ topic, onRefresh, onEdit, onDelete }: TopicCardProps) {
+  const router = useRouter()
+
   const handleDelete = async () => {
     if (!confirm(`确定要删除主题"${topic.name}"吗？\n\n删除主题不会删除条目，只会移除关联。`)) {
       return
@@ -47,20 +50,34 @@ export function TopicCard({ topic, onRefresh, onEdit, onDelete }: TopicCardProps
     }
   }
 
+  const handleViewDetail = () => {
+    // 跳转到知识库页面并切换到对应主题 tab
+    router.push(`/knowledge?topic=${topic.id}`)
+  }
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              {topic.color && (
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: topic.color }}
-                />
+              {topic.icon && topic.icon.startsWith('crypto:') ? (
+                <>
+                  <TopicIcon icon={topic.icon} size={20} />
+                  <CardTitle className="text-lg">{topic.name}</CardTitle>
+                </>
+              ) : (
+                <>
+                  {topic.color && (
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: topic.color }}
+                    />
+                  )}
+                  {topic.icon && <span className="text-lg">{topic.icon}</span>}
+                  <CardTitle className="text-lg">{topic.name}</CardTitle>
+                </>
               )}
-              {topic.icon && <span className="text-lg">{topic.icon}</span>}
-              <CardTitle className="text-lg">{topic.name}</CardTitle>
             </div>
             {topic.description && (
               <CardDescription className="mt-2 line-clamp-2">
@@ -75,11 +92,9 @@ export function TopicCard({ topic, onRefresh, onEdit, onDelete }: TopicCardProps
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/knowledge/topics/${topic.id}`}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  查看详情
-                </Link>
+              <DropdownMenuItem onClick={handleViewDetail}>
+                <Eye className="mr-2 h-4 w-4" />
+                查看详情
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit?.(topic)}>
                 <Edit className="mr-2 h-4 w-4" />
@@ -101,10 +116,8 @@ export function TopicCard({ topic, onRefresh, onEdit, onDelete }: TopicCardProps
           <Badge variant="secondary">
             {topic.entry_count} 个条目
           </Badge>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/knowledge/topics/${topic.id}`}>
-              查看详情
-            </Link>
+          <Button variant="outline" size="sm" onClick={handleViewDetail}>
+            查看详情
           </Button>
         </div>
       </CardContent>

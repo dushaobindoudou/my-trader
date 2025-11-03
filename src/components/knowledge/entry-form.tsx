@@ -39,6 +39,7 @@ import type {
 } from '@/types/knowledge'
 import { Category as CategoryEnum } from '@/types/knowledge'
 import type { Topic } from '@/types/topic'
+import { TopicIcon } from './topic-icon'
 
 interface EntryFormProps {
   open: boolean
@@ -333,13 +334,21 @@ export function EntryForm({ open, onOpenChange, entry, onSubmit }: EntryFormProp
                         htmlFor={`topic-${topic.id}`}
                         className="text-sm font-normal cursor-pointer flex items-center gap-2"
                       >
-                        {topic.color && (
-                          <div
-                            className="w-4 h-4 rounded-full"
-                            style={{ backgroundColor: topic.color }}
-                          />
+                        {topic.icon && topic.icon.startsWith('crypto:') ? (
+                          <TopicIcon icon={topic.icon} size={16} />
+                        ) : (
+                          <>
+                            {topic.color && (
+                              <div
+                                className="w-4 h-4 rounded-full"
+                                style={{ backgroundColor: topic.color }}
+                              />
+                            )}
+                            {topic.icon && !topic.icon.startsWith('crypto:') && (
+                              <span>{topic.icon}</span>
+                            )}
+                          </>
                         )}
-                        {topic.icon && <span>{topic.icon}</span>}
                         <span>{topic.name}</span>
                       </Label>
                     </div>

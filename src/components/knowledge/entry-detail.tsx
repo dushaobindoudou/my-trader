@@ -21,6 +21,8 @@ import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useEffect, useState } from 'react'
+import { TopicIcon } from './topic-icon'
 
 interface EntryDetailProps {
   entry: KnowledgeEntry | null
@@ -45,6 +47,38 @@ export function EntryDetail({
   onEdit,
   onDelete,
 }: EntryDetailProps) {
+  const [topics, setTopics] = useState<Topic[]>([])
+
+  // 当打开对话框时，如果没有主题信息但有 topic_ids，加载主题信息
+  useEffect(() => {
+    if (open && entry) {
+      if (entry.topics && entry.topics.length > 0) {
+        // 如果已有主题信息，直接使用
+        setTopics(entry.topics)
+      } else if (entry.topic_ids && entry.topic_ids.length > 0) {
+        // 如果没有主题信息但有 topic_ids，加载主题信息
+        fetch('/api/topics')
+          .then((res) => res.json())
+          .then((allTopics: Topic[]) => {
+            // 根据 topic_ids 过滤出对应的主题
+            const entryTopics = allTopics.filter((topic) =>
+              entry.topic_ids?.includes(topic.id)
+            )
+            setTopics(entryTopics)
+          })
+          .catch((error) => {
+            console.error('Failed to load topics:', error)
+            setTopics([])
+          })
+      } else {
+        setTopics([])
+      }
+    } else if (!open) {
+      // 关闭对话框时清空
+      setTopics([])
+    }
+  }, [open, entry])
+
   if (!entry) return null
 
   const categoryColor = categoryColors[entry.category] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
@@ -153,33 +187,43 @@ export function EntryDetail({
             )}
 
             {/* 主题 */}
-            {entry.topic_ids && entry.topic_ids.length > 0 && (
+            {(entry.topic_ids && entry.topic_ids.length > 0) || topics.length > 0 ? (
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-2 block">
                   主题
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {entry.topics?.map((topic) => (
-                    <Badge key={topic.id} variant="outline" className="gap-1.5 text-sm">
-                      {topic.color && (
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: topic.color }}
-                        />
+                  {topics.map((topic) => (
+                    <Badge key={topic.id} variant="outline" className="gap-1.5 text-sm flex items-center">
+                      {topic.icon && topic.icon.startsWith('crypto:') ? (
+                        <TopicIcon icon={topic.icon} size={14} />
+                      ) : (
+                        <>
+                          {topic.color && (
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: topic.color }}
+                            />
+                          )}
+                          {topic.icon && !topic.icon.startsWith('crypto:') && (
+                            <span>{topic.icon}</span>
+                          )}
+                        </>
                       )}
-                      {topic.icon && <span>{topic.icon}</span>}
-                      {topic.name}
+                      <span>{topic.name}</span>
                     </Badge>
                   ))}
-                  {!entry.topics &&
+                  {/* 如果加载中或加载失败，显示 topic_ids 作为后备 */}
+                  {topics.length === 0 && entry.topic_ids && entry.topic_ids.length > 0 && (
                     entry.topic_ids.map((id) => (
                       <Badge key={id} variant="outline" className="text-sm font-mono text-xs">
                         {id}
                       </Badge>
-                    ))}
+                    ))
+                  )}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* 内容 */}
