@@ -67,7 +67,9 @@ export function EntryList({ filter, sort, onEdit, onDelete, onViewDetail }: Entr
       params.set('page', page.toString())
       params.set('limit', pageSize.toString())
 
-      const response = await fetch(`/api/knowledge?${params.toString()}`)
+      const response = await fetch(`/api/knowledge?${params.toString()}`, {
+        credentials: 'include', // 确保 Cookie 被发送
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch entries')
       }

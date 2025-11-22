@@ -55,7 +55,7 @@ export const authConfig = {
   routes: {
     login: '/login',
     dashboard: '/',
-    protected: ['/portfolio', '/trades', '/analysis', '/watchlist', '/history', '/knowledge', '/settings'],
+    protected: ['/portfolio', '/analysis/trading', '/analysis', '/watchlist', '/history', '/knowledge', '/settings'],
   },
 } as const;
 

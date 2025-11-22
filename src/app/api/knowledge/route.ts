@@ -15,9 +15,20 @@ import type {
   KnowledgeEntryFilter,
   KnowledgeEntrySort,
 } from '@/types/knowledge'
+import { verifyAuth } from '@/lib/auth/middleware'
 
 export async function GET(request: NextRequest) {
   try {
+    // 验证用户身份
+    const authResult = await verifyAuth(request)
+    if (!authResult.isValid || !authResult.user_address) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid or missing session' },
+        { status: 401 }
+      )
+    }
+
+    const user_address = authResult.user_address
     const searchParams = request.nextUrl.searchParams
 
     // 检查是否是导出请求
@@ -26,6 +37,7 @@ export async function GET(request: NextRequest) {
       // 处理导出请求
       const format = searchParams.get('format') || 'json'
       const filter = parseFilterParams(searchParams)
+      filter.user_address = user_address // 设置用户地址用于数据隔离
       const data = await exportKnowledgeEntries(filter)
 
       if (format === 'csv') {
@@ -79,6 +91,7 @@ export async function GET(request: NextRequest) {
       confidenceMin,
       confidenceMax,
       confidenceLevel,
+      user_address, // 设置用户地址用于数据隔离
     }
 
     const sort: KnowledgeEntrySort = {
@@ -105,6 +118,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST request received', request);
+    // 验证用户身份
+    const authResult = await verifyAuth(request)
+    if (!authResult.isValid || !authResult.user_address) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid or missing session' },
+        { status: 401 }
+      )
+    }
+
     const body: KnowledgeEntryCreateInput = await request.json()
 
     // 验证必填字段
@@ -114,6 +137,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // 设置用户地址（从会话中获取，不允许客户端指定）
+    body.user_address = authResult.user_address
 
     const entry = await createKnowledgeEntry(body)
 
@@ -203,6 +229,7 @@ function parseFilterParams(searchParams: URLSearchParams): KnowledgeEntryFilter 
     confidenceMin,
     confidenceMax,
     confidenceLevel,
+    user_address: '', // 占位符，会在调用时设置
   }
 }
 

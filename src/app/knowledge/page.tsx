@@ -44,14 +44,18 @@ export default function KnowledgePage() {
     const loadAvailableData = async () => {
       try {
         // 加载标签
-        const tagsResponse = await fetch('/api/knowledge/tags')
+        const tagsResponse = await fetch('/api/knowledge/tags', {
+          credentials: 'include', // 确保 Cookie 被发送
+        })
         if (tagsResponse.ok) {
           const tags = await tagsResponse.json()
           setAvailableTags(tags)
         }
 
         // 加载主题
-        const topicsResponse = await fetch('/api/topics')
+        const topicsResponse = await fetch('/api/topics', {
+          credentials: 'include', // 确保 Cookie 被发送
+        })
         if (topicsResponse.ok) {
           const topics = await topicsResponse.json()
           setAvailableTopics(
@@ -112,6 +116,7 @@ export default function KnowledgePage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // 确保 Cookie 被发送
         body: JSON.stringify(data),
       })
 
@@ -146,7 +151,9 @@ export default function KnowledgePage() {
   const handleViewDetail = async (entry: KnowledgeEntry) => {
     // 如果需要完整数据，可以从服务器获取
     try {
-      const response = await fetch(`/api/knowledge/${entry.id}`)
+      const response = await fetch(`/api/knowledge/${entry.id}`, {
+        credentials: 'include', // 确保 Cookie 被发送
+      })
       if (response.ok) {
         const fullEntry = await response.json()
         setDetailEntry(fullEntry)
@@ -172,6 +179,7 @@ export default function KnowledgePage() {
     try {
       const response = await fetch(`/api/knowledge/${id}`, {
         method: 'DELETE',
+        credentials: 'include', // 确保 Cookie 被发送
       })
 
       if (!response.ok) {

@@ -12,15 +12,25 @@ import {
   deleteKnowledgeEntry,
 } from '@/lib/knowledge'
 import type { KnowledgeEntryUpdateInput } from '@/types/knowledge'
+import { verifyAuth } from '@/lib/auth/middleware'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    // 验证用户身份
+    const authResult = await verifyAuth(request)
+    if (!authResult.isValid || !authResult.user_address) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid or missing session' },
+        { status: 401 }
+      )
+    }
+
     // 处理 Next.js 15 中 params 可能是 Promise 的情况
     const resolvedParams = params instanceof Promise ? await params : params
-    const entry = await getKnowledgeEntryById(resolvedParams.id)
+    const entry = await getKnowledgeEntryById(resolvedParams.id, authResult.user_address)
 
     if (!entry) {
       return NextResponse.json({ error: 'Entry not found' }, { status: 404 })
@@ -41,6 +51,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    // 验证用户身份
+    const authResult = await verifyAuth(request)
+    if (!authResult.isValid || !authResult.user_address) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid or missing session' },
+        { status: 401 }
+      )
+    }
+
     // 处理 Next.js 15 中 params 可能是 Promise 的情况
     const resolvedParams = params instanceof Promise ? await params : params
     const body: KnowledgeEntryUpdateInput = await request.json()
@@ -52,6 +71,9 @@ export async function PATCH(
         { status: 400 }
       )
     }
+
+    // 设置用户地址（从会话中获取，不允许客户端指定）
+    body.user_address = authResult.user_address
 
     // 清理和验证 body 中的 topic_ids
     const cleanedBody = { ...body }
@@ -87,6 +109,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    // 验证用户身份
+    const authResult = await verifyAuth(request)
+    if (!authResult.isValid || !authResult.user_address) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid or missing session' },
+        { status: 401 }
+      )
+    }
+
     // 处理 Next.js 15 中 params 可能是 Promise 的情况
     const resolvedParams = params instanceof Promise ? await params : params
     
@@ -97,7 +128,7 @@ export async function DELETE(
       )
     }
 
-    await deleteKnowledgeEntry(resolvedParams.id)
+    await deleteKnowledgeEntry(resolvedParams.id, authResult.user_address)
 
     return NextResponse.json({ success: true })
   } catch (error) {

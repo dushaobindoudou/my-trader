@@ -64,7 +64,7 @@ export default function TopicsPage() {
       <Main>
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">主题管理</h1>
+            <h1 className="text-2xl font-bold tracking-tight">投资主题</h1>
             <p className="text-muted-foreground">管理知识库主题分类</p>
           </div>
           <Button onClick={() => {

@@ -22,7 +22,7 @@ export const sidebarData: SidebarData = {
   },
   navGroups: [
     {
-      title: '核心',
+      title: '资产',
       items: [
         {
           title: '首页',
@@ -30,9 +30,9 @@ export const sidebarData: SidebarData = {
           icon: LayoutDashboard,
         },
         {
-          title: '交易',
-          url: '/trades',
-          icon: TrendingUp,
+          title: '交易历史',
+          url: '/history',
+          icon: History,
         },
         {
           title: '投资组合',
@@ -40,14 +40,14 @@ export const sidebarData: SidebarData = {
           icon: Briefcase,
         },
         {
-          title: '自选股',
+          title: '观察区',
           url: '/watchlist',
           icon: Search,
         },
       ],
     },
     {
-      title: '分析与学习',
+      title: '分析',
       items: [
         {
           title: '市场分析',
@@ -55,9 +55,9 @@ export const sidebarData: SidebarData = {
           icon: BarChart3,
         },
         {
-          title: '交易历史',
-          url: '/history',
-          icon: History,
+          title: '交易分析',
+          url: '/analysis/trading',
+          icon: TrendingUp,
         },
         {
           title: '知识库',
@@ -65,12 +65,13 @@ export const sidebarData: SidebarData = {
           icon: BookOpen,
         },
         {
-          title: '主题管理',
+          title: '投资主题',
           url: '/knowledge/topics',
           icon: FolderKanban,
         },
       ],
     },
+
     {
       title: '系统',
       items: [
@@ -82,6 +83,11 @@ export const sidebarData: SidebarData = {
         {
           title: '认证测试',
           url: '/test-auth',
+          icon: TestTube,
+        },
+        {
+          title: 'Hyperliquid API 测试',
+          url: '/test-hyperliquid',
           icon: TestTube,
         },
       ],

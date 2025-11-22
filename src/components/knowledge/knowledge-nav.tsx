@@ -58,7 +58,7 @@ export function KnowledgeNav({
 
   // 根据传入的 selectedTopicId 或路径确定当前选项卡
   const getCurrentTab = () => {
-    // 如果只显示按钮（主题管理页面），不显示活动选项卡
+    // 如果只显示按钮（投资主题页面），不显示活动选项卡
     if (showOnlyButton || pathname === '/knowledge/topics') {
       return undefined
     }

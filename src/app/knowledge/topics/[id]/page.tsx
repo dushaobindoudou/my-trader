@@ -57,7 +57,7 @@ export default function TopicDetailPage() {
           <div className="mb-6">
             <Button variant="ghost" size="sm" disabled>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              返回主题管理
+              返回投资主题
             </Button>
           </div>
           <div className="mb-6">
@@ -80,7 +80,7 @@ export default function TopicDetailPage() {
           <div className="mb-6">
             <Button variant="ghost" size="sm" onClick={() => router.push('/knowledge/topics')}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              返回主题管理
+              返回投资主题
             </Button>
           </div>
           <Card>
@@ -103,7 +103,7 @@ export default function TopicDetailPage() {
             onClick={() => router.push('/knowledge/topics')}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            返回主题管理
+            返回投资主题
           </Button>
         </div>
 

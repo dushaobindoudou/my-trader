@@ -39,8 +39,8 @@ const navigation = [
     icon: BookOpen,
   },
   {
-    name: "投资记录",
-    href: "/trades",
+    name: "交易分析",
+    href: "/analysis/trading",
     icon: TrendingUp,
   },
   {

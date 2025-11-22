@@ -16,6 +16,7 @@ import { ConfidenceLevel } from '@/types/knowledge'
 
 /**
  * 获取知识库条目列表
+ * @param params 查询参数，必须包含 user_address 用于数据隔离
  */
 export async function getKnowledgeEntries(
   params: KnowledgeEntryListParams = {}
@@ -23,10 +24,16 @@ export async function getKnowledgeEntries(
   const { filter = {}, sort, page = 1, limit = 20 } = params
   const supabase = createAdminClient()
 
+  // 验证 user_address（必需）
+  if (!filter.user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
   // 先查询主表，不包含关联表（避免关系查询问题）
   let query = supabase
     .from('knowledge_entries')
     .select('*', { count: 'exact' })
+    .eq('user_address', filter.user_address.toLowerCase()) // 数据隔离：只查询当前用户的数据
 
   // 应用筛选条件
   if (filter.category) {
@@ -172,15 +179,26 @@ export async function getKnowledgeEntries(
 
 /**
  * 获取单个知识库条目
+ * @param id 条目 ID
+ * @param user_address 用户地址，用于数据隔离验证
  */
-export async function getKnowledgeEntryById(id: string): Promise<KnowledgeEntry | null> {
+export async function getKnowledgeEntryById(
+  id: string,
+  user_address: string
+): Promise<KnowledgeEntry | null> {
   const supabase = createAdminClient()
 
-  // 先查询主表
+  // 验证 user_address（必需）
+  if (!user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
+  // 先查询主表，同时验证 user_address
   const { data, error } = await supabase
     .from('knowledge_entries')
     .select('*')
     .eq('id', id)
+    .eq('user_address', user_address.toLowerCase()) // 数据隔离：只查询当前用户的数据
     .single()
 
   if (error) {
@@ -207,19 +225,26 @@ export async function getKnowledgeEntryById(id: string): Promise<KnowledgeEntry 
 
 /**
  * 创建知识库条目
+ * @param input 创建输入，必须包含 user_address
  */
 export async function createKnowledgeEntry(
   input: KnowledgeEntryCreateInput
 ): Promise<KnowledgeEntry> {
   const supabase = createAdminClient()
 
-  const { topic_ids, ...entryData } = input
+  // 验证 user_address（必需）
+  if (!input.user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
 
-  // 准备插入数据，包含所有字段（包括 confidence_score）
+  const { topic_ids, user_address, ...entryData } = input
+
+  // 准备插入数据，包含所有字段（包括 confidence_score 和 user_address）
   const insertData: any = {
     content: entryData.content,
     category: entryData.category,
     tags: entryData.tags || [],
+    user_address: user_address.toLowerCase(), // 数据隔离：设置用户地址
   }
 
   // 如果提供了 confidence_score，直接包含在插入数据中
@@ -266,7 +291,7 @@ export async function createKnowledgeEntry(
   }
 
   // 重新获取数据（包含所有字段）
-  const finalData = await getKnowledgeEntryById(data.id)
+  const finalData = await getKnowledgeEntryById(data.id, user_address)
   if (!finalData) {
     throw new Error('Failed to fetch created entry')
   }
@@ -310,12 +335,19 @@ export async function createKnowledgeEntry(
 
 /**
  * 更新知识库条目
+ * @param id 条目 ID
+ * @param input 更新输入，必须包含 user_address 用于数据隔离验证
  */
 export async function updateKnowledgeEntry(
   id: string,
   input: KnowledgeEntryUpdateInput
 ): Promise<KnowledgeEntry> {
   const supabase = createAdminClient()
+
+  // 验证 user_address（必需）
+  if (!input.user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
 
   // 验证 ID 是否是有效的 UUID
   if (!id || id === 'undefined' || id === 'null') {
@@ -327,8 +359,10 @@ export async function updateKnowledgeEntry(
     throw new Error(`Invalid entry ID format: ${id}`)
   }
 
+  const { user_address, ...updateInput } = input
+
   // 清理输入数据中的 topic_ids
-  const cleanedInput = { ...input }
+  const cleanedInput = { ...updateInput }
   if (cleanedInput.topic_ids !== undefined) {
     if (Array.isArray(cleanedInput.topic_ids)) {
       // 过滤掉无效的 UUID
@@ -367,18 +401,19 @@ export async function updateKnowledgeEntry(
 
   // 如果没有要更新的字段，直接返回当前数据
   if (Object.keys(updateFields).length === 0 && topic_ids === undefined) {
-    const entry = await getKnowledgeEntryById(id)
+    const entry = await getKnowledgeEntryById(id, user_address)
     if (!entry) {
       throw new Error('Knowledge entry not found')
     }
     return entry
   }
 
-  // 更新条目
+  // 更新条目，同时验证 user_address（数据隔离）
   const { data, error } = await supabase
     .from('knowledge_entries')
     .update(updateFields)
     .eq('id', id)
+    .eq('user_address', user_address.toLowerCase()) // 数据隔离：只更新当前用户的数据
     .select()
     .single()
 
@@ -391,7 +426,7 @@ export async function updateKnowledgeEntry(
           '⚠️ confidence_score 字段不存在，已跳过更新。请运行迁移文件添加该字段。'
         )
         // 返回当前数据，不进行更新
-        const entry = await getKnowledgeEntryById(id)
+        const entry = await getKnowledgeEntryById(id, user_address)
         if (!entry) {
           throw new Error('Knowledge entry not found')
         }
@@ -415,7 +450,7 @@ export async function updateKnowledgeEntry(
       )
 
       // 获取更新后的数据
-      const entry = await getKnowledgeEntryById(id)
+      const entry = await getKnowledgeEntryById(id, user_address)
       return entry!
     }
     throw new Error(`Failed to update knowledge entry: ${error.message}`)
@@ -476,15 +511,37 @@ export async function updateKnowledgeEntry(
   }
 
   // 获取更新后的完整数据（包含主题关联）
-  const entry = await getKnowledgeEntryById(id)
+  const entry = await getKnowledgeEntryById(id, user_address)
   return entry!
 }
 
 /**
  * 删除知识库条目
+ * @param id 条目 ID
+ * @param user_address 用户地址，用于数据隔离验证
  */
-export async function deleteKnowledgeEntry(id: string): Promise<void> {
+export async function deleteKnowledgeEntry(
+  id: string,
+  user_address: string
+): Promise<void> {
   const supabase = createAdminClient()
+
+  // 验证 user_address（必需）
+  if (!user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
+  // 先验证条目是否属于当前用户
+  const { data: entry } = await supabase
+    .from('knowledge_entries')
+    .select('id')
+    .eq('id', id)
+    .eq('user_address', user_address.toLowerCase())
+    .single()
+
+  if (!entry) {
+    throw new Error('Knowledge entry not found or access denied')
+  }
 
   // 删除关联表记录（级联删除会自动处理）
   await supabase
@@ -493,7 +550,11 @@ export async function deleteKnowledgeEntry(id: string): Promise<void> {
     .eq('knowledge_entry_id', id)
 
   // 删除条目
-  const { error } = await supabase.from('knowledge_entries').delete().eq('id', id)
+  const { error } = await supabase
+    .from('knowledge_entries')
+    .delete()
+    .eq('id', id)
+    .eq('user_address', user_address.toLowerCase()) // 数据隔离：只删除当前用户的数据
 
   if (error) {
     throw new Error(`Failed to delete knowledge entry: ${error.message}`)
@@ -502,14 +563,23 @@ export async function deleteKnowledgeEntry(id: string): Promise<void> {
 
 /**
  * 导出知识库条目（支持筛选条件）
+ * @param filter 筛选条件，必须包含 user_address 用于数据隔离
  */
 export async function exportKnowledgeEntries(
   filter?: KnowledgeEntryFilter
 ): Promise<KnowledgeEntry[]> {
   const supabase = createAdminClient()
 
+  // 验证 user_address（必需）
+  if (!filter?.user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
   // 先查询主表，不包含关联表
-  let query = supabase.from('knowledge_entries').select('*')
+  let query = supabase
+    .from('knowledge_entries')
+    .select('*')
+    .eq('user_address', filter.user_address.toLowerCase()) // 数据隔离：只查询当前用户的数据
 
   // 应用筛选条件（与 getKnowledgeEntries 相同的逻辑）
   if (filter?.category) {

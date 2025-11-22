@@ -14,10 +14,20 @@ import {
   Github,
   Twitter,
   Bot,
-  Send
+  Send,
+  FileText,
+  Activity,
+  Target,
+  Telescope,
+  Plus,
+  ChevronRight,
 } from 'lucide-react';
 import { authConfig } from '@/config/auth';
 import { BackgroundPaths } from './background';
+import Image from 'next/image';
+import logo from '@/assets/icon.svg';
+import logoDark from '@/assets/icon-dark.svg';
+import { useTheme } from '@/contexts/theme-provider';
 
 // 吸顶 Header 组件
 const StickyHeader = ({ onLogin, isLoading, isLoggingIn }: { 
@@ -26,6 +36,7 @@ const StickyHeader = ({ onLogin, isLoading, isLoggingIn }: {
   isLoggingIn: boolean; 
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,11 +60,16 @@ const StickyHeader = ({ onLogin, isLoading, isLoggingIn }: {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Wallet className="w-4 h-4 text-primary-foreground" />
+              <Image 
+                src={resolvedTheme !== 'dark' ? logoDark : logo} 
+                alt="AIphaTrader" 
+                width={32} 
+                height={32} 
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold">{authConfig.app.name}</h1>
-              <p className="text-xs text-muted-foreground">Web3辅助投资平台</p>
+              <p className="text-xs text-muted-foreground">AI × Web3 投资平台</p>
             </div>
           </div>
 
@@ -61,7 +77,7 @@ const StickyHeader = ({ onLogin, isLoading, isLoggingIn }: {
           <Button 
             onClick={onLogin}
             disabled={isLoading || isLoggingIn}
-            className="relative overflow-hidden h-9 px-3"
+            size="sm"
           >
             {isLoading || isLoggingIn ? (
               <>
@@ -81,12 +97,13 @@ const StickyHeader = ({ onLogin, isLoading, isLoggingIn }: {
   );
 };
 
-
 // 粒子流动背景组件
 const AnimatedBackground = () => {
-  return <div className='absolute inset-0'>
+  return (
+    <div className='absolute inset-0'>
       <BackgroundPaths />
-    </div>;
+    </div>
+  );
 };
 
 // 主内容组件
@@ -95,94 +112,170 @@ const MainContent = ({ onLogin, isLoading, isLoggingIn }: {
   isLoading: boolean; 
   isLoggingIn: boolean; 
 }) => {
-
-  const features = [
+  // 工作机制三步流程
+  const workflowSteps = [
     {
-      icon: <Shield className="w-6 h-6" />,
-      title: '安全可靠',
-      description: 'Web3原生安全，多重加密保护',
+      step: '1',
+      icon: <FileText className="w-6 h-6" />,
+      title: '输入你的兴趣和洞察',
+      description: '上传、描述或连接你的研究、策略或偏好。AI 将基于你的输入生成投资假设与执行框架。',
       color: 'text-blue-500'
     },
     {
-      icon: <Zap className="w-6 h-6" />,
-      title: '快速便捷',
-      description: '一键登录，秒级响应',
-      color: 'text-yellow-500'
+      step: '2',
+      icon: <Activity className="w-6 h-6" />,
+      title: 'AI 自动建模与执行',
+      description: 'AI 在链上生成、回测并执行策略。所有过程公开可审计，数据与逻辑透明可追溯。',
+      color: 'text-purple-500'
     },
     {
-      icon: <TrendingUp className="w-6 h-6" />,
-      title: '专业交易',
-      description: '专业金融工具，智能分析',
+      step: '3',
+      icon: <Target className="w-6 h-6" />,
+      title: '获得你的 Alpha 回报',
+      description: '你可以实时追踪结果、分享策略、获得收益。每一次洞察，都是价值的创造。',
+      color: 'text-green-500'
+    }
+  ];
+
+  // 平台亮点
+  const features = [
+    {
+      icon: <Telescope className="w-5 h-5" />,
+      title: '兴趣驱动的 AI 策略生成',
+      description: '用你的领域知识，引导 AI 找到新的市场机会。',
+      color: 'text-blue-500'
+    },
+    {
+      icon: <Shield className="w-5 h-5" />,
+      title: '链上验证与可追溯回报',
+      description: '所有策略的执行、收益与风险数据链上可查。',
       color: 'text-green-500'
     },
     {
-      icon: <Globe className="w-6 h-6" />,
-      title: '全球覆盖',
-      description: '支持全球主要交易所',
+      icon: <Globe className="w-5 h-5" />,
+      title: '开放的 Alpha 生态',
+      description: '共享策略、收益与模型，让更多人参与智能协作。',
       color: 'text-purple-500'
+    },
+    {
+      icon: <Plus className="w-5 h-5" />,
+      title: '去中心化的风控系统',
+      description: '风险建模与仓位管理由 AI 自动执行，确保安全性。',
+      color: 'text-orange-500'
     }
   ];
 
   return (
     <div className="relative">
       {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center px-4">
+      <section className="min-h-screen flex items-center justify-center px-4 pt-20">
         <div className="text-center max-w-4xl mx-auto">
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                开启您的
+              {/* 主标题 */}
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
+                <span className="bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
+                  用你的兴趣，
+                </span>
                 <br />
-                <span className="text-foreground">Web3金融</span>
-                之旅
+                <span className="text-foreground">与 AI 一起创造 Alpha</span>
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                连接您的数字钱包，体验下一代金融交易平台。
-                <br />
-                安全、快速、专业的Web3交易体验。
+              
+              {/* 副标题 */}
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                AI × Web3 平台，让个人知识转化为可验证的超额收益。
               </p>
+
+              {/* 短句标语 */}
+              <div className="inline-flex items-center justify-center px-5 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <span className="text-sm font-semibold text-foreground">
+                  兴趣 × AI × Web3 = Alpha
+                </span>
+              </div>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4">
-              <div className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold bg-secondary text-secondary-foreground">
-                <Shield className="w-4 h-4 mr-2" />
-                银行级安全
-              </div>
-              <div className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold bg-secondary text-secondary-foreground">
-                <Zap className="w-4 h-4 mr-2" />
-                极速交易
-              </div>
-              <div className="inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold bg-secondary text-secondary-foreground">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                智能分析
-              </div>
+            {/* CTA 按钮组 */}
+            <div className="flex flex-wrap justify-center gap-3 pt-4">
+              <Button 
+                onClick={onLogin}
+                disabled={isLoading || isLoggingIn}
+                size="lg"
+                className="h-10 px-6"
+              >
+                {isLoading || isLoggingIn ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    连接中...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-4 h-4 mr-2" />
+                    连接钱包
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="outline"
+                size="lg"
+                className="h-10 px-6"
+              >
+                了解更多
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">为什么选择我们</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              我们提供最先进的Web3金融解决方案，让您的投资更加智能和安全
+      {/* 核心理念 Section */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-3xl">
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl md:text-3xl font-bold">核心理念</h2>
+            <div className="space-y-3 text-sm md:text-base text-muted-foreground leading-relaxed">
+              <p>我们相信，<strong className="text-foreground">Alpha 不应只属于少数人</strong>。</p>
+              <p>每个人都拥有独特的洞察力。</p>
+              <p>当这些洞察与 AI 的智能算力结合，价值就能被放大、量化，并在链上被验证。</p>
+            </div>
+            <div className="pt-4 border-t border-border/50">
+              <p className="text-base md:text-lg font-semibold text-primary italic">
+                让智能与兴趣，共同驱动新的财富分配方式。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 工作机制 Section */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">工作机制</h2>
+            <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto">
+              简单三步，让你的洞察力转化为可验证的 Alpha 回报
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {workflowSteps.map((step, index) => (
               <Card 
-                key={index} 
-                className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-2 border-border/50 opacity-80"
+                key={index}
+                className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-border/50 relative"
               >
-                <CardContent className="p-6 text-center">
-                  <div className={`w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${feature.color}`}>
-                    {feature.icon}
+                <CardContent className="p-6 relative">
+                  {/* 步骤编号 */}
+                  <div className="absolute top-3 right-3 text-5xl font-bold text-muted-foreground/30">
+                    {step.step}
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  
+                  {/* 图标 */}
+                  <div className={`w-12 h-12 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${step.color}`}>
+                    {step.icon}
+                  </div>
+                  
+                  {/* 标题和描述 */}
+                  <h3 className="text-base font-semibold mb-2 text-center">{step.title}</h3>
+                  <p className="text-xs text-muted-foreground text-center leading-relaxed">{step.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -190,39 +283,49 @@ const MainContent = ({ onLogin, isLoading, isLoggingIn }: {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="space-y-2">
-              <div className="text-4xl md:text-5xl font-bold text-primary">$2.5B+</div>
-              <div className="text-muted-foreground">交易总额</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-4xl md:text-5xl font-bold text-primary">50K+</div>
-              <div className="text-muted-foreground">活跃用户</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-4xl md:text-5xl font-bold text-primary">99.9%</div>
-              <div className="text-muted-foreground">系统稳定性</div>
-            </div>
+      {/* 平台亮点 Section */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">平台亮点</h2>
+            <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto">
+              我们提供最先进的 AI × Web3 解决方案，让您的知识产生真实回报
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <Card 
+                key={index} 
+                className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-border/50"
+              >
+                <CardContent className="p-5 text-center">
+                  <div className={`w-12 h-12 mx-auto mb-3 rounded-full bg-muted/50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${feature.color}`}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-sm font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 mb-32">
-        <div className="container mx-auto text-center">
-          <Card className="max-w-2xl mx-auto border-primary/20 bg-background/90">
-            <CardContent className="p-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">准备开始您的Web3之旅？</h2>
-              <p className="text-xl text-muted-foreground mb-8">
-                立即连接您的钱包，体验下一代金融交易平台
+      <section className="py-16 px-4 mb-20">
+        <div className="container mx-auto text-center max-w-2xl">
+          <Card className="border-primary/20">
+            <CardContent className="p-8">
+              <h2 className="text-xl md:text-2xl font-bold mb-3">准备开始你的 Web3 之旅？</h2>
+              <p className="text-sm md:text-base text-muted-foreground mb-6">
+                立即连接你的钱包，体验下一代金融交易平台
               </p>
               <Button 
                 onClick={onLogin}
                 disabled={isLoading || isLoggingIn}
-                className="h-11 px-6"
+                size="lg"
+                className="h-10 px-6"
               >
                 {isLoading || isLoggingIn ? (
                   <>
@@ -340,23 +443,27 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <StickyHeader 
-        onLogin={handleLogin}
-        isLoading={isLoading}
-        isLoggingIn={isLoggingIn}
-      />
+    <div className="min-h-screen relative">
+      {/* 背景层 */}
       <div className='fixed inset-0 z-0'>
         <AnimatedBackground />
       </div>
-      <div className='backdrop-blur-sm bg-background/80 border-b border-border/50 shadow-sm'>
-        <div className="relative">
-          <MainContent 
-            onLogin={handleLogin}
-            isLoading={isLoading}
-            isLoggingIn={isLoggingIn}
-          />
-        </div>
+      
+      {/* 毛玻璃遮罩层 - 遮住背景动画 */}
+      <div className='fixed inset-0 z-[5] backdrop-blur-sm bg-background/40 pointer-events-none'></div>
+      
+      {/* 内容层 */}
+      <div className='relative z-10'>
+        <StickyHeader 
+          onLogin={handleLogin}
+          isLoading={isLoading}
+          isLoggingIn={isLoggingIn}
+        />
+        <MainContent 
+          onLogin={handleLogin}
+          isLoading={isLoading}
+          isLoggingIn={isLoggingIn}
+        />
         <Footer />
       </div>
     </div>

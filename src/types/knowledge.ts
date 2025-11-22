@@ -24,6 +24,7 @@ export interface KnowledgeEntry {
   category: Category
   tags: string[]
   confidence_score: number | null // 1-10分制，可选
+  user_address: string // 用户 Web3 地址，用于数据隔离
   created_at: string
   updated_at: string
   topic_ids?: string[] // 关联的主题ID列表
@@ -37,6 +38,7 @@ export interface KnowledgeEntryCreateInput {
   tags?: string[]
   confidence_score?: number | null // 1-10分制，可选
   topic_ids?: string[] // 关联的主题ID列表
+  user_address: string // 用户 Web3 地址，用于数据隔离（必需）
 }
 
 // 更新知识库条目输入
@@ -46,6 +48,7 @@ export interface KnowledgeEntryUpdateInput {
   tags?: string[]
   confidence_score?: number | null
   topic_ids?: string[] // 更新主题关联
+  user_address: string // 用户 Web3 地址，用于数据隔离验证（必需）
 }
 
 // 知识库条目筛选条件
@@ -59,6 +62,7 @@ export interface KnowledgeEntryFilter {
   confidenceMin?: number // 置信度最小值
   confidenceMax?: number // 置信度最大值
   confidenceLevel?: ConfidenceLevel // 置信度等级筛选
+  user_address: string // 用户 Web3 地址，用于数据隔离（必需）
 }
 
 // 知识库条目排序

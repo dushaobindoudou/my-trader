@@ -12,15 +12,22 @@ import type {
 
 /**
  * 获取所有主题（包含条目数量）
+ * @param user_address 用户地址，用于数据隔离
  */
-export async function getTopics(): Promise<TopicWithEntryCount[]> {
+export async function getTopics(user_address: string): Promise<TopicWithEntryCount[]> {
   const supabase = createAdminClient()
 
+  // 验证 user_address（必需）
+  if (!user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
   try {
-    // 获取所有主题
+    // 获取当前用户的所有主题
     const { data: topics, error: topicsError } = await supabase
       .from('topics')
       .select('*')
+      .eq('user_address', user_address.toLowerCase()) // 数据隔离：只查询当前用户的数据
       .order('created_at', { ascending: false })
 
     if (topicsError) {
@@ -33,7 +40,7 @@ export async function getTopics(): Promise<TopicWithEntryCount[]> {
       return []
     }
 
-    // 获取每个主题的条目数量
+    // 获取每个主题的条目数量（只统计当前用户的知识库条目）
     const topicIds = topics.map((t) => t.id)
     
     // 如果 topicIds 为空，直接返回空数组
@@ -44,10 +51,28 @@ export async function getTopics(): Promise<TopicWithEntryCount[]> {
       }))
     }
 
+    // 先获取当前用户的所有知识库条目 ID
+    const { data: userEntries } = await supabase
+      .from('knowledge_entries')
+      .select('id')
+      .eq('user_address', user_address.toLowerCase())
+
+    const userEntryIds = userEntries?.map((e) => e.id) || []
+
+    // 如果用户没有知识库条目，所有主题的条目数量都是 0
+    if (userEntryIds.length === 0) {
+      return topics.map((topic) => ({
+        ...topic,
+        entry_count: 0,
+      }))
+    }
+
+    // 只统计当前用户的知识库条目与主题的关联
     const { data: entryCounts, error: countError } = await supabase
       .from('knowledge_entry_topics')
       .select('topic_id')
       .in('topic_id', topicIds)
+      .in('knowledge_entry_id', userEntryIds) // 只统计当前用户的条目
 
     if (countError) {
       // 如果关联表不存在或为空，只记录错误但不抛出，返回条目数量为0
@@ -80,14 +105,25 @@ export async function getTopics(): Promise<TopicWithEntryCount[]> {
 
 /**
  * 获取单个主题详情（包含条目列表）
+ * @param id 主题 ID
+ * @param user_address 用户地址，用于数据隔离验证
  */
-export async function getTopicById(id: string): Promise<TopicWithEntryCount | null> {
+export async function getTopicById(
+  id: string,
+  user_address: string
+): Promise<TopicWithEntryCount | null> {
   const supabase = createAdminClient()
+
+  // 验证 user_address（必需）
+  if (!user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
 
   const { data: topic, error } = await supabase
     .from('topics')
     .select('*')
     .eq('id', id)
+    .eq('user_address', user_address.toLowerCase()) // 数据隔离：只查询当前用户的数据
     .single()
 
   if (error) {
@@ -97,38 +133,64 @@ export async function getTopicById(id: string): Promise<TopicWithEntryCount | nu
     throw new Error(`Failed to fetch topic: ${error.message}`)
   }
 
-  // 获取条目数量
-  const { count } = await supabase
-    .from('knowledge_entry_topics')
-    .select('*', { count: 'exact', head: true })
-    .eq('topic_id', id)
+  // 获取条目数量（只统计当前用户的知识库条目）
+  // 先获取当前用户的所有知识库条目 ID
+  const { data: userEntries } = await supabase
+    .from('knowledge_entries')
+    .select('id')
+    .eq('user_address', user_address.toLowerCase())
+
+  const userEntryIds = userEntries?.map((e) => e.id) || []
+
+  let count = 0
+  if (userEntryIds.length > 0) {
+    const { count: entryCount } = await supabase
+      .from('knowledge_entry_topics')
+      .select('*', { count: 'exact', head: true })
+      .eq('topic_id', id)
+      .in('knowledge_entry_id', userEntryIds) // 只统计当前用户的条目
+
+    count = entryCount || 0
+  }
 
   return {
     ...topic,
-    entry_count: count || 0,
+    entry_count: count,
   }
 }
 
 /**
  * 创建主题
+ * @param input 创建输入，必须包含 user_address
  */
 export async function createTopic(input: TopicCreateInput): Promise<Topic> {
   const supabase = createAdminClient()
 
-  // 检查名称唯一性
+  // 验证 user_address（必需）
+  if (!input.user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
+  // 检查名称唯一性（在同一用户下）
   const { data: existing } = await supabase
     .from('topics')
     .select('id')
     .eq('name', input.name)
+    .eq('user_address', input.user_address.toLowerCase())
     .single()
 
   if (existing) {
     throw new Error(`主题名称 "${input.name}" 已存在`)
   }
 
+  const { user_address, ...topicData } = input
+
   const { data, error } = await supabase
     .from('topics')
-    .insert(input)
+    .insert({
+      ...topicData,
+      user_address: user_address.toLowerCase(), // 数据隔离：设置用户地址
+    })
     .select()
     .single()
 
@@ -141,28 +203,40 @@ export async function createTopic(input: TopicCreateInput): Promise<Topic> {
 
 /**
  * 更新主题
+ * @param id 主题 ID
+ * @param input 更新输入，必须包含 user_address 用于数据隔离验证
  */
 export async function updateTopic(id: string, input: TopicUpdateInput): Promise<Topic> {
   const supabase = createAdminClient()
 
-  // 如果更新名称，检查唯一性
-  if (input.name) {
+  // 验证 user_address（必需）
+  if (!input.user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
+  const { user_address, ...updateData } = input
+
+  // 如果更新名称，检查唯一性（在同一用户下）
+  if (updateData.name) {
     const { data: existing } = await supabase
       .from('topics')
       .select('id')
-      .eq('name', input.name)
+      .eq('name', updateData.name)
+      .eq('user_address', user_address.toLowerCase())
       .neq('id', id)
       .single()
 
     if (existing) {
-      throw new Error(`主题名称 "${input.name}" 已存在`)
+      throw new Error(`主题名称 "${updateData.name}" 已存在`)
     }
   }
 
+  // 更新主题，同时验证 user_address（数据隔离）
   const { data, error } = await supabase
     .from('topics')
-    .update(input)
+    .update(updateData)
     .eq('id', id)
+    .eq('user_address', user_address.toLowerCase()) // 数据隔离：只更新当前用户的数据
     .select()
     .single()
 
@@ -175,15 +249,38 @@ export async function updateTopic(id: string, input: TopicUpdateInput): Promise<
 
 /**
  * 删除主题（级联删除关联表记录）
+ * @param id 主题 ID
+ * @param user_address 用户地址，用于数据隔离验证
  */
-export async function deleteTopic(id: string): Promise<void> {
+export async function deleteTopic(id: string, user_address: string): Promise<void> {
   const supabase = createAdminClient()
+
+  // 验证 user_address（必需）
+  if (!user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
+  // 先验证主题是否属于当前用户
+  const { data: topic } = await supabase
+    .from('topics')
+    .select('id')
+    .eq('id', id)
+    .eq('user_address', user_address.toLowerCase())
+    .single()
+
+  if (!topic) {
+    throw new Error('Topic not found or access denied')
+  }
 
   // 删除关联表记录（级联删除会自动处理）
   await supabase.from('knowledge_entry_topics').delete().eq('topic_id', id)
 
   // 删除主题
-  const { error } = await supabase.from('topics').delete().eq('id', id)
+  const { error } = await supabase
+    .from('topics')
+    .delete()
+    .eq('id', id)
+    .eq('user_address', user_address.toLowerCase()) // 数据隔离：只删除当前用户的数据
 
   if (error) {
     throw new Error(`Failed to delete topic: ${error.message}`)
@@ -192,14 +289,50 @@ export async function deleteTopic(id: string): Promise<void> {
 
 /**
  * 获取主题下的所有条目ID列表
+ * @param topicId 主题 ID
+ * @param user_address 用户地址，用于数据隔离验证
  */
-export async function getTopicEntryIds(topicId: string): Promise<string[]> {
+export async function getTopicEntryIds(
+  topicId: string,
+  user_address: string
+): Promise<string[]> {
   const supabase = createAdminClient()
 
+  // 验证 user_address（必需）
+  if (!user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
+  // 先验证主题是否属于当前用户
+  const { data: topic } = await supabase
+    .from('topics')
+    .select('id')
+    .eq('id', topicId)
+    .eq('user_address', user_address.toLowerCase())
+    .single()
+
+  if (!topic) {
+    throw new Error('Topic not found or access denied')
+  }
+
+  // 获取当前用户的所有知识库条目 ID
+  const { data: userEntries } = await supabase
+    .from('knowledge_entries')
+    .select('id')
+    .eq('user_address', user_address.toLowerCase())
+
+  const userEntryIds = userEntries?.map((e) => e.id) || []
+
+  if (userEntryIds.length === 0) {
+    return []
+  }
+
+  // 只返回当前用户的条目
   const { data, error } = await supabase
     .from('knowledge_entry_topics')
     .select('knowledge_entry_id')
     .eq('topic_id', topicId)
+    .in('knowledge_entry_id', userEntryIds) // 只查询当前用户的条目
 
   if (error) {
     throw new Error(`Failed to fetch topic entries: ${error.message}`)
@@ -210,15 +343,50 @@ export async function getTopicEntryIds(topicId: string): Promise<string[]> {
 
 /**
  * 批量添加条目到主题
+ * @param topicId 主题 ID
+ * @param entryIds 条目 ID 列表
+ * @param user_address 用户地址，用于数据隔离验证
  */
 export async function addEntriesToTopic(
   topicId: string,
-  entryIds: string[]
+  entryIds: string[],
+  user_address: string
 ): Promise<void> {
   const supabase = createAdminClient()
 
+  // 验证 user_address（必需）
+  if (!user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
   if (entryIds.length === 0) {
     return
+  }
+
+  // 先验证主题是否属于当前用户
+  const { data: topic } = await supabase
+    .from('topics')
+    .select('id')
+    .eq('id', topicId)
+    .eq('user_address', user_address.toLowerCase())
+    .single()
+
+  if (!topic) {
+    throw new Error('Topic not found or access denied')
+  }
+
+  // 验证所有条目都属于当前用户
+  const { data: userEntries } = await supabase
+    .from('knowledge_entries')
+    .select('id')
+    .eq('user_address', user_address.toLowerCase())
+    .in('id', entryIds)
+
+  const validEntryIds = userEntries?.map((e) => e.id) || []
+  const invalidEntryIds = entryIds.filter((id) => !validEntryIds.includes(id))
+
+  if (invalidEntryIds.length > 0) {
+    throw new Error(`Some entries do not belong to the current user: ${invalidEntryIds.join(', ')}`)
   }
 
   // 检查哪些条目已经关联
@@ -226,12 +394,12 @@ export async function addEntriesToTopic(
     .from('knowledge_entry_topics')
     .select('knowledge_entry_id')
     .eq('topic_id', topicId)
-    .in('knowledge_entry_id', entryIds)
+    .in('knowledge_entry_id', validEntryIds)
 
   const existingIds = new Set(existing?.map((item) => item.knowledge_entry_id) || [])
 
   // 只添加未关联的条目
-  const newEntries = entryIds
+  const newEntries = validEntryIds
     .filter((id) => !existingIds.has(id))
     .map((entryId) => ({
       topic_id: topicId,
@@ -251,12 +419,45 @@ export async function addEntriesToTopic(
 
 /**
  * 从主题中移除条目
+ * @param topicId 主题 ID
+ * @param entryId 条目 ID
+ * @param user_address 用户地址，用于数据隔离验证
  */
 export async function removeEntryFromTopic(
   topicId: string,
-  entryId: string
+  entryId: string,
+  user_address: string
 ): Promise<void> {
   const supabase = createAdminClient()
+
+  // 验证 user_address（必需）
+  if (!user_address) {
+    throw new Error('user_address is required for data isolation')
+  }
+
+  // 先验证主题是否属于当前用户
+  const { data: topic } = await supabase
+    .from('topics')
+    .select('id')
+    .eq('id', topicId)
+    .eq('user_address', user_address.toLowerCase())
+    .single()
+
+  if (!topic) {
+    throw new Error('Topic not found or access denied')
+  }
+
+  // 验证条目是否属于当前用户
+  const { data: entry } = await supabase
+    .from('knowledge_entries')
+    .select('id')
+    .eq('id', entryId)
+    .eq('user_address', user_address.toLowerCase())
+    .single()
+
+  if (!entry) {
+    throw new Error('Entry not found or access denied')
+  }
 
   const { error } = await supabase
     .from('knowledge_entry_topics')

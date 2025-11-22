@@ -38,7 +38,9 @@ export function ExportButton({ filter }: ExportButtonProps) {
       params.set('export', 'true')
       params.set('format', format)
 
-      const response = await fetch(`/api/knowledge?${params.toString()}`)
+      const response = await fetch(`/api/knowledge?${params.toString()}`, {
+        credentials: 'include', // 确保 Cookie 被发送
+      })
       
       if (!response.ok) {
         throw new Error('导出失败')
