@@ -12,6 +12,7 @@ import type { KnowledgeEntry, PaginatedResponse } from '@/types/knowledge'
 import type { KnowledgeEntryFilter, KnowledgeEntrySort } from '@/types/knowledge'
 import { EntryCard } from './entry-card'
 import { Pagination } from './pagination'
+import { useWeb3Auth } from '@/contexts/web3auth-context'
 
 interface EntryListProps {
   filter?: KnowledgeEntryFilter
@@ -22,14 +23,17 @@ interface EntryListProps {
 }
 
 export function EntryList({ filter, sort, onEdit, onDelete, onViewDetail }: EntryListProps) {
+  const { isAuthenticated, isLoading: isAuthLoading } = useWeb3Auth()
   const [data, setData] = useState<PaginatedResponse<KnowledgeEntry> | null>(null)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
 
   useEffect(() => {
-    fetchEntries()
-  }, [filter, sort, page, pageSize])
+    if (isAuthenticated) {
+      fetchEntries()
+    }
+  }, [filter, sort, page, pageSize, isAuthenticated])
 
   // 筛选条件变化时重置到第一页
   useEffect(() => {
@@ -82,7 +86,7 @@ export function EntryList({ filter, sort, onEdit, onDelete, onViewDetail }: Entr
     }
   }
 
-  if (loading) {
+  if (loading || isAuthLoading || !isAuthenticated) {
     return (
       <div className="grid gap-4">
         {[1, 2, 3].map((i) => (

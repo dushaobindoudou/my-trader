@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useEffect, useRef } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useRef, useState } from 'react';
 import { useWeb3AuthConnect, useWeb3AuthDisconnect, useWeb3AuthUser, useSwitchChain } from '@web3auth/modal/react';
 import { useAccount } from 'wagmi';
 import { authConfig } from '@/config/auth';
@@ -9,6 +9,7 @@ interface Web3AuthContextType {
   user: any;
   isLoading: boolean;
   isLoggedIn: boolean;
+  isAuthenticated: boolean; // 后端会话是否有效
   login: () => Promise<void>;
   logout: () => Promise<void>;
   getUserInfo: () => Promise<any>;
@@ -49,6 +50,10 @@ export const Web3AuthProvider: React.FC<Web3AuthProviderProps> = ({ children }) 
   
   // 用于跟踪是否已经为当前地址创建了会话
   const sessionCreatedRef = useRef<string | null>(null);
+  
+  // 后端会话验证状态
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isSessionChecking, setIsSessionChecking] = useState(false);
 
 
   const login = async () => {
@@ -66,6 +71,7 @@ export const Web3AuthProvider: React.FC<Web3AuthProviderProps> = ({ children }) 
 
   const logout = async () => {
     try {
+      setIsAuthenticated(false);
       // 先调用后端 API 使会话失效
       try {
         await fetch('/api/auth/logout', {
@@ -109,66 +115,101 @@ export const Web3AuthProvider: React.FC<Web3AuthProviderProps> = ({ children }) 
     }
   };
 
-  console.log(chain);
-
-  // 当连接成功且有地址时，自动创建后端会话
+  // 当连接成功且有地址时，管理后端会话
   useEffect(() => {
-    const createBackendSession = async () => {
-      if (isConnected && address && sessionCreatedRef.current !== address) {
-        try {
-          console.log('Creating backend session for address:', address);
-          
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include', // 包含 Cookie
-            body: JSON.stringify({
-              user_address: address,
-              expiresInHours: 24,
-              metadata: {
-                connectorName,
-                chainId,
-                loginTime: new Date().toISOString(),
+    const manageBackendSession = async () => {
+      if (isConnected && address) {
+        // 如果地址变了，或者还没有验证过
+        if (sessionCreatedRef.current !== address) {
+          setIsSessionChecking(true);
+          try {
+            console.log('Checking/Creating backend session for address:', address);
+            
+            // 1. 尝试验证现有会话
+            try {
+              const verifyResponse = await fetch('/api/auth/verify', {
+                credentials: 'include',
+              });
+              
+              if (verifyResponse.ok) {
+                const verifyData = await verifyResponse.json();
+                // 如果现有会话有效且地址匹配
+                if (verifyData.valid && verifyData.user_address?.toLowerCase() === address.toLowerCase()) {
+                  console.log('Existing session is valid');
+                  sessionCreatedRef.current = address;
+                  setIsAuthenticated(true);
+                  setIsSessionChecking(false);
+                  return;
+                }
+              }
+            } catch (e) {
+              console.warn('Session verification failed, proceeding to login', e);
+            }
+
+            // 2. 如果验证失败或地址不匹配，创建新会话
+            const response = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
               },
-            }),
-          });
+              credentials: 'include', // 包含 Cookie
+              body: JSON.stringify({
+                user_address: address,
+                expiresInHours: 24,
+                metadata: {
+                  connectorName,
+                  chainId,
+                  loginTime: new Date().toISOString(),
+                },
+              }),
+            });
 
-          if (!response.ok) {
-            const error = await response.json();
-            console.error('Failed to create backend session:', error);
-            return;
+            if (!response.ok) {
+              const error = await response.json();
+              console.error('Failed to create backend session:', error);
+              setIsAuthenticated(false);
+              return;
+            }
+
+            const data = await response.json();
+            console.log('Backend session created successfully:', {
+              session_id: data.session_id?.substring(0, 10) + '...',
+              user_address: data.user_address,
+            });
+            
+            // 标记已为此地址创建会话
+            sessionCreatedRef.current = address;
+            setIsAuthenticated(true);
+          } catch (error) {
+            console.error('Error managing backend session:', error);
+            setIsAuthenticated(false);
+          } finally {
+            setIsSessionChecking(false);
           }
-
-          const data = await response.json();
-          console.log('Backend session created successfully:', {
-            session_id: data.session_id?.substring(0, 10) + '...',
-            user_address: data.user_address,
-          });
-          
-          // 标记已为此地址创建会话
-          sessionCreatedRef.current = address;
-        } catch (error) {
-          console.error('Error creating backend session:', error);
         }
+      } else {
+        // 未连接，重置状态
+        setIsAuthenticated(false);
+        sessionCreatedRef.current = null;
       }
     };
 
-    createBackendSession();
+    manageBackendSession();
   }, [isConnected, address, connectorName, chainId]);
 
   // 当断开连接时，清除会话引用
   useEffect(() => {
     if (!isConnected) {
       sessionCreatedRef.current = null;
+      setIsAuthenticated(false);
     }
   }, [isConnected]);
 
   const value: Web3AuthContextType = {
     user: userInfo,
-    isLoading: connectLoading || disconnectLoading,
+    isLoading: connectLoading || disconnectLoading || isSessionChecking,
     isLoggedIn: isConnected,
+    isAuthenticated,
     login,
     logout,
     getUserInfo,

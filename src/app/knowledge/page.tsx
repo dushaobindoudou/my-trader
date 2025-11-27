@@ -13,8 +13,10 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { KnowledgeEntryFilter, KnowledgeEntrySort, KnowledgeEntry } from '@/types/knowledge'
 import type { KnowledgeEntryCreateInput, KnowledgeEntryUpdateInput } from '@/types/knowledge'
+import { useWeb3Auth } from '@/contexts/web3auth-context'
 
 export default function KnowledgePage() {
+  const { isAuthenticated } = useWeb3Auth()
   const searchParams = useSearchParams()
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null) // 当前选中的主题ID
   const [filter, setFilter] = useState<KnowledgeEntryFilter>({})
@@ -41,6 +43,8 @@ export default function KnowledgePage() {
 
   // 加载可用标签和主题
   useEffect(() => {
+    if (!isAuthenticated) return
+
     const loadAvailableData = async () => {
       try {
         // 加载标签
@@ -68,7 +72,7 @@ export default function KnowledgePage() {
     }
 
     loadAvailableData()
-  }, [])
+  }, [isAuthenticated])
 
   // 处理主题切换（来自 Tab）
   const handleTopicChange = (topicId: string | null) => {
